@@ -66,7 +66,7 @@ function multi_arch_docker::install_docker_buildx() {
 #   DOCKER_USERNAME ... user name of Docker Hub account
 #   DOCKER_PASSWORD ... password of Docker Hub account
 function multi_arch_docker::login_to_docker_hub() {
-  echo "$DOCKER_PASSWORD" | docker login -u="$DOCKER_USERNAME" --password-stdin
+  docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 }
 
 # Run buildx build and push.
