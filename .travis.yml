@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+language: bash
+
+dist: bionic
+
+env:
+  global:
+  - secure: CSs4gX7Gj++4KD9wA+tavB+r8Y9VDsjjtYf3gUKcYQfZT4+TQkJ79NgpDPbnXRz7OjoCpsiMhrUD+iAFeCbw4q6MLmoZ6DiIgTevXYkGLiuartioau82aqn6MBWbROMq7FT+eB0Plv+IWmMTSJUJ/6AH2atOEQ85MRAX9yWuMxHWvcVTs/smsA/Qhq4IC+UaIYV3KCVAoJnDi9c7t1bvWzkEdeY8sM0AGhm1qa+8IqXokiohgktDIWfBCRsSDnrZmi7d9UZ+GyebQJTJkEXam4G4GvhdejZ+CVVvN4hcKuvZl9t0vBUc1NIMCjwY73cCR2fLQTfK/4zXZAOG8Q9fVqmp5JsD0ME158o0gTZSIjvSe2NdUuK1Ynzp/esZFTkX5AEXT43du23sIN/ynUFkmrO29gv2Ox2Nbbfz5fgvtAKxxwX0mlukcH4MxZfcKa6dOLVPr22n0ttI9kGzpToNljURLeX8VlGAIIg2Wyleb7g6u6gUnst+DGEkwklMmP3c2iP0eh74zXEkVIjkLUxvJFVHKlUmJGqDO0ugE8BJeE1+4R5nnz8XDpFBUuGdfm/C0rG87KVQs4akYTXqhHlFh9ueNGgXtPGt5ggcKmfLzGPUXwlfpDeU5NbnMLRta29r5ihSEqURF6XqIYzc4l/k9/mVHHu7y7RjCqTsnOhFEuw=
+  - secure: FA01GWV7IEkcjYHz94pCRMX1b5KrV5MGujxwIDCdAyMJM3GEyW0pFEYv0hLlm79L87nehMEVpfAcQnCsP4VGwc7tzLTYXti/YhTdc85TE6GunkHlqv1EyOBVo4h+N3S9tQsiU/rG0MAPHX+jJzRg/Xy/CYOWdPW2nXqEq7gDYZPOr7e1cxq5Ls36H0gfCGEEmhYym4c6gLREb4XqUgmFZqchSIanz5Sfuik50ZjMJVhGCFNmKuBHEr14HBMequWZ4Kop2eusvCAxiiPpt318o2z6eExJHPitKwpIzBB+b44L10cxdmzvg/+Ue+qRlsG2eZAYGJZwDmaiuXVEoLaO9mVOz2gsrgsoONo9EX8m7VQEzMsjUrlIFKsvWWC/oSQdEd+p6N1hOb09TmAUg6zvrkBYn0ICisTMdtRLctLAw4hrqqmmPHVF7YYT+e97ERcgJcyZINKSgVuY2ir6EeD8FyRq/JrLgYgmdWzn/gfoRjd6mx75qFf4ZT53BDnHxG1IjEn/UIwRLtAQlbp7tU6+D5d0wFEgpssBlQsbOqtqAxJ6S51tGcJWveBoyxc9yB+fVgAsVqwGb+HDs/PZVD3BgL1qVyP+4y+WuTclVmmOixF89R+Rgg4wyhQioQW3VmCp1Bi8H73VPIIj0XHCKm5IpGf311olgO0hw8X8H0eeXWA=
+  - TRAVIS_SECURE_ENV_VARS=true
+  - DOCKER_PLATFORMS='linux/amd64, linux/arm64, linux/arm/v7'
+  - TAGS='latest'
+  - DOCKER_BASE=$DOCKER_USERNAME/librespot
+
+jobs:
+  include:
+    - stage: Deploy docker image
+      script:
+        - source ./multi-arch-docker-ci.sh
+        - set -ex; multi_arch_docker::main; set +x
