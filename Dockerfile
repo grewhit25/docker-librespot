@@ -10,7 +10,7 @@ COPY Cargo.toml-upd /tmp/Cargo.toml
 RUN apk update && \
     apk add --virtual .build-deps build-base git curl cargo portaudio-dev protobuf-dev pulseaudio-dev && \
     apk upgrade \
-    cd /root && \
+    cd /root \
     && git clone https://github.com/librespot-org/librespot.git \
     && cd librespot \
     && cp /tmp/Cargo.toml connect/ \
