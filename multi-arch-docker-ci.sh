@@ -78,7 +78,7 @@ function multi_arch_docker::login_to_docker_hub() {
 function multi_arch_docker::buildx() {
   docker buildx build \
     --platform "${DOCKER_PLATFORMS// /,}" \
-    --output=type=registry \
+    --push \
     --progress plain \
     -f Dockerfile.multi-arch \
     "$@" \
