@@ -21,7 +21,7 @@ cache: cargo
 # Install build environment
 install:
   - source ./setup_ci_environment.sh
-  - set -ex; setup_ci_environment:main; set +x
+  - set -ex; setup_ci_environment::main; set +x
 
 # Default build stage
 defaults: &defaults
