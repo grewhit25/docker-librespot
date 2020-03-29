@@ -13,7 +13,7 @@
 #     - stage: Deploy docker image
 #       script:
 #         - source ./multi-arch-docker-ci.sh
-#         - set -ex; setup_ci_enviroment::main; set +x
+#         - set -ex; setup_ci_environment::main; set +x
 #
 #  Platforms: linux/amd64, linux/arm64, linux/riscv64, linux/ppc64le,
 #  linux/s390x, linux/386, linux/arm/v7, linux/arm/v6
@@ -24,7 +24,7 @@ function _version() {
   printf '%02d' $(echo "$1" | tr . ' ' | sed -e 's/ 0*/ /g') 2>/dev/null
 }
 
-function setup_ci_enviroment::install_docker_buildx() {
+function setup_ci_environment::install_docker_buildx() {
   # Check kernel version.
   local -r kernel_version="$(uname -r)"
   if [[ "$(_version "$kernel_version")" < "$(_version '4.8')" ]]; then
@@ -65,15 +65,15 @@ function setup_ci_enviroment::install_docker_buildx() {
 # Env:
 #   DOCKER_USERNAME ... user name of Docker Hub account
 #   DOCKER_PASSWORD ... password of Docker Hub account
-function setup_ci_enviroment::login_to_docker_hub() {
+function setup_ci_environment::login_to_docker_hub() {
   echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
 
 }
 
 
 # Setup ci environment
-function setup_ci_enviroment::main() {
+function setup_ci_environment::main() {
   cp Dockerfile Dockerfile.multi-arch
-  setup_ci_enviroment::install_docker_buildx
-  setup_ci_enviroment::login_to_docker_hub
+  setup_ci_environment::install_docker_buildx
+  setup_ci_environment::login_to_docker_hub
 }
