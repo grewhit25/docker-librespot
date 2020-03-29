@@ -14,7 +14,7 @@ env:
 defaults: &defaults
   script:
     - source ./build_ci_images.sh
-    - set -ex; ./build_ci_images::main; set +x
+    - set -ex; build_ci_images::main; set +x
 jobs:
   include:
     # define a separate script for each platform
