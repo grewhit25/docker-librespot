@@ -13,7 +13,7 @@
 #     - stage: Deploy docker image
 #       script:
 #         - source ./multi-arch-docker-ci.sh
-#         - set -ex; setup_ci_environment::main; set +x
+#         - set -ex; multi_arch_docker::main; set +x
 #
 #  Platforms: linux/amd64, linux/arm64, linux/riscv64, linux/ppc64le,
 #  linux/s390x, linux/386, linux/arm/v7, linux/arm/v6
@@ -24,7 +24,7 @@ function _version() {
   printf '%02d' $(echo "$1" | tr . ' ' | sed -e 's/ 0*/ /g') 2>/dev/null
 }
 
-function setup_ci_environment::install_docker_buildx() {
+function multi_arch_docker::install_docker_buildx() {
   # Check kernel version.
   local -r kernel_version="$(uname -r)"
   if [[ "$(_version "$kernel_version")" < "$(_version '4.8')" ]]; then
@@ -65,15 +65,71 @@ function setup_ci_environment::install_docker_buildx() {
 # Env:
 #   DOCKER_USERNAME ... user name of Docker Hub account
 #   DOCKER_PASSWORD ... password of Docker Hub account
-function setup_ci_environment::login_to_docker_hub() {
+function multi_arch_docker::login_to_docker_hub() {
   echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
 
 }
 
+# Run buildx build and push.
+# Env:
+#   DOCKER_PLATFORMS ... space separated list of Docker platforms to build.
+# Args:
+#   Optional additional arguments for 'docker buildx build'.
+function multi_arch_docker::buildx() {
+  docker buildx build \
+    --platform "${DOCKER_PLATFORMS// /,}" \
+    --push \
+    --progress plain \
+    -f Dockerfile.multi-arch \
+    "$@" \
+    .
+}
 
-# Setup ci environment
-function setup_ci_environment::main() {
+# Build and push docker images for all tags.
+# Env:
+#   DOCKER_PLATFORMS ... space separated list of Docker platforms to build.
+#   DOCKER_BASE ........ docker image base name to build
+#   TAGS ............... space separated list of docker image tags to build.
+function multi_arch_docker::build_and_push_all() {
+  for tag in $TAGS; do
+    multi_arch_docker::buildx -t "$DOCKER_BASE:$tag"
+  done
+}
+
+# Test all pushed docker images.
+# Env:
+#   DOCKER_PLATFORMS ... space separated list of Docker platforms to test.
+#   DOCKER_BASE ........ docker image base name to test
+#   TAGS ............... space separated list of docker image tags to test.
+function multi_arch_docker::test_all() {
+  for platform in $DOCKER_PLATFORMS; do
+    for tag in $TAGS; do
+      image="${DOCKER_BASE}:${tag}"
+      msg="Testing docker image $image on platform $platform"
+      line="${msg//?/=}"
+      printf '\n%s\n%s\n%s\n' "${line}" "${msg}" "${line}"
+      docker pull -q --platform "$platform" "$image"
+
+      echo -n "Image architecture: "
+      docker run --rm --entrypoint /bin/sh "$image" -c 'uname -m'
+
+      # Run your test on the built image.
+      docker run --rm -v "$PWD:/mnt" -w /mnt "$image" echo "Running on $(uname -m)"
+    done
+  done
+}
+
+function multi_arch_docker::main() {
+  # Set docker platforms for which to build.
+  export DOCKER_PLATFORMS='linux/amd64'
+  DOCKER_PLATFORMS+=' linux/arm64'
+  DOCKER_PLATFORMS+=' linux/arm/v6'
+
   cp Dockerfile Dockerfile.multi-arch
-  setup_ci_environment::install_docker_buildx
-  setup_ci_environment::login_to_docker_hub
+  DOCKER_BASE=$TRAVIS_REPO_SLUG
+  multi_arch_docker::install_docker_buildx
+  multi_arch_docker::login_to_docker_hub
+  multi_arch_docker::build_and_push_all
+  set +x
+  multi_arch_docker::test_all
 }
