@@ -43,7 +43,7 @@ jobs:
       <<: *defaults
     - stage: build
       env:
-        - DOCKER_PLATFORMS='linux/arm/v6
+        - DOCKER_PLATFORMS='linux/arm/v6'
       <<: *defaults
     #- stage: build
     #  env:
