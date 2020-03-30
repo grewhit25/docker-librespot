@@ -14,7 +14,7 @@ RUN apk update && \
     && git clone https://github.com/librespot-org/librespot.git \
     && cd librespot \
     && cp /tmp/Cargo.toml connect/ \
-    && cargo build --release --no-default-features \
+    && cargo build --jobs 2 --release --no-default-features \
     && mv /root/librespot/target/release/librespot /usr/local/bin \
     && cd / \
     && apk --purge del .build-deps \
