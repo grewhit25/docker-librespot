@@ -13,18 +13,20 @@
 #     - stage: Deploy docker image
 #       script:
 #         - source ./multi-arch-docker-ci.sh
-#         - set -ex; multi_arch_docker::main; set +x
+#         - set -ex; build_ci_images::main; set +x
 #
 #  Platforms: linux/amd64, linux/arm64, linux/riscv64, linux/ppc64le,
 #  linux/s390x, linux/386, linux/arm/v7, linux/arm/v6
 # More information about Linux environment constraints can be found at:
 # https://nexus.eddiesinentropy.net/2020/01/12/Building-Multi-architecture-Docker-Images-With-Buildx/
 
+# Setup ci environment
+
 function _version() {
   printf '%02d' $(echo "$1" | tr . ' ' | sed -e 's/ 0*/ /g') 2>/dev/null
 }
 
-function multi_arch_docker::install_docker_buildx() {
+function setup_ci_environment::install_docker_buildx() {
   # Check kernel version.
   local -r kernel_version="$(uname -r)"
   if [[ "$(_version "$kernel_version")" < "$(_version '4.8')" ]]; then
@@ -65,7 +67,7 @@ function multi_arch_docker::install_docker_buildx() {
 # Env:
 #   DOCKER_USERNAME ... user name of Docker Hub account
 #   DOCKER_PASSWORD ... password of Docker Hub account
-function multi_arch_docker::login_to_docker_hub() {
+function setup_ci_environment::login_to_docker_hub() {
   echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
 
 }
@@ -75,7 +77,7 @@ function multi_arch_docker::login_to_docker_hub() {
 #   DOCKER_PLATFORMS ... space separated list of Docker platforms to build.
 # Args:
 #   Optional additional arguments for 'docker buildx build'.
-function multi_arch_docker::buildx() {
+function build_ci_images::buildx() {
   docker buildx build \
     --platform "${DOCKER_PLATFORMS// /,}" \
     --push \
@@ -90,9 +92,9 @@ function multi_arch_docker::buildx() {
 #   DOCKER_PLATFORMS ... space separated list of Docker platforms to build.
 #   DOCKER_BASE ........ docker image base name to build
 #   TAGS ............... space separated list of docker image tags to build.
-function multi_arch_docker::build_and_push_all() {
+function build_ci_images::build_and_push_all() {
   for tag in $TAGS; do
-    multi_arch_docker::buildx -t "$DOCKER_BASE:$tag"
+    build_ci_images::buildx -t "$DOCKER_BASE:$tag"
   done
 }
 
@@ -101,34 +103,37 @@ function multi_arch_docker::build_and_push_all() {
 #   DOCKER_PLATFORMS ... space separated list of Docker platforms to test.
 #   DOCKER_BASE ........ docker image base name to test
 #   TAGS ............... space separated list of docker image tags to test.
-function multi_arch_docker::test_all() {
+function build_ci_images::test_all() {
   for platform in $DOCKER_PLATFORMS; do
     for tag in $TAGS; do
       image="${DOCKER_BASE}:${tag}"
       msg="Testing docker image $image on platform $platform"
       line="${msg//?/=}"
-      printf '\n%s\n%s\n%s\n' "${line}" "${msg}" "${line}"
+      printf '\n%s\n%s\n%s\n' "\n${line}" "${msg}" "${line}"
       docker pull -q --platform "$platform" "$image"
 
       echo -n "Image architecture: "
       docker run --rm --entrypoint /bin/sh "$image" -c 'uname -m'
 
-      # Run your test on the built image.
-      docker run --rm -v "$PWD:/mnt" -w /mnt "$image" echo "Running on $(uname -m)"
+      # Run test on the built image.
+      #docker run --rm  --entrypoint [] "$image" command yarn version
     done
+      
   done
 }
 
-function multi_arch_docker::main() {
-  # Set docker platforms for which to build.
-  export DOCKER_PLATFORMS='linux/arm64'
-  DOCKER_PLATFORMS+=' linux/arm/v6'
-  #DOCKER_PLATFORMS+=' linux/amd64'
-
+# Setup ci environment
+function setup_ci_environment::main() {
   cp Dockerfile Dockerfile.multi-arch
-  multi_arch_docker::install_docker_buildx
-  multi_arch_docker::login_to_docker_hub
-  multi_arch_docker::build_and_push_all
-  set +x
-  multi_arch_docker::test_all
+  setup_ci_environment::install_docker_buildx
+  setup_ci_environment::login_to_docker_hub
+}
+
+# Build images
+function build_ci_images::main() {
+  # Set platforms to build.
+  export DOCKER_BASE=${DOCKER_REGISTRY}/${TRAVIS_REPO_SLUG#*/}
+  echo ${DOCKER_SLUG}
+  build_ci_images::build_and_push_all
+  build_ci_images::test_all
 }
