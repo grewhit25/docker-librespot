@@ -1,30 +1,50 @@
-FROM alpine:edge
+# https://github.com/librespot-org/librespot/blob/master/COMPILING.md
+FROM ubuntu:focal as librespot_source
 
-# https://github.com/librespot-org/librespot.git
-# https://github.com/kevineye/docker-librespot
+RUN apt-get update && apt-get upgrade -y && \
+    DEBIAN_FRONTEND=noninteractive \
+    apt-get install -y \
+    build-essential \
+    portaudio19-dev \
+    libasound2-dev \
+    libpulse-dev \
+    pkg-config \
+    curl \
+    git
+    
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+RUN git clone https://github.com/librespot-org/librespot.git /src
+WORKDIR /src
+ENV PATH="/root/.cargo/bin:$PATH"
+RUN cargo build \
+        --release \
+        --no-default-features
 
-WORKDIR /root
-# nix 0.10.0 fix; https://github.com/librespot-org/librespot/issues/454
-COPY Cargo.toml-upd /tmp/Cargo.toml
+# Stage 2 build published image
+FROM ubuntu:focal
 
-RUN apk update && \
-    apk add --virtual .build-deps build-base git curl cargo portaudio-dev protobuf-dev pulseaudio-dev && \
-    apk upgrade \
-    cd /root \
-    && git clone https://github.com/librespot-org/librespot.git \
-    && cd librespot \
-    && cp /tmp/Cargo.toml connect/ \
-    && cargo build --jobs $(grep -c ^processor /proc/cpuinfo) --release --no-default-features \
-    && mv /root/librespot/target/release/librespot /usr/local/bin \
-    && cd / \
-    && apk --purge del .build-deps \
-    && apk add llvm-libunwind \
-    && rm -rf /etc/ssl /var/cache/apk/* /lib/apk/db/* /root/librespot /root/.cargo
+ENV LIBRESPOT_NAME librespot
 
-USER root
+## librespot dependencies for run
+RUN apt-get update && apt-get install -y \ 
+        libportaudio2 \
+    && apt-get clean && rm -fR /var/lib/apt/lists
 
-#ENV SPOTIFY_NAME Docker
-#ENV SPOTIFY_DEVICE /data/fifo
-#
-#CMD librespot -n "$SPOTIFY_NAME" -u "$SPOTIFY_USER" -p "$SPOTIFY_PASSWORD" --device "$SPOTIFY_DEVICE"
+# Copy image built from source
+COPY --from=librespot_source \
+        /src/target/release/librespot \
+        /usr/local/bin/librespot
+COPY entrypoint.sh /
+
+# Create user librespot for running librespot
+RUN chmod +x /usr/local/bin/librespot && \
+    chmod +x entrypoint.sh && \
+    groupadd -r librespot && \
+    useradd -ms /bin/bash -g librespot librespot
+
+USER librespot
+
+ENV device_name SpotifyConnect
+
+ENTRYPOINT ["/entrypoint.sh"]
 
