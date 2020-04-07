@@ -1,5 +1,5 @@
 # https://github.com/librespot-org/librespot/blob/master/COMPILING.md
-FROM ubuntu:focal as librespot_source
+FROM ubuntu:18.04 as librespot_source
 
 RUN apt-get update && apt-get upgrade -y && \
     DEBIAN_FRONTEND=noninteractive \
