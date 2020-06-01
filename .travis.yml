@@ -19,10 +19,9 @@ jobs:
   fast_finish: true
   include:
   - stage: Deploy docker image
-    env: DOCKER_SLUG=$DOCKER_REGISTRY/$TRAVIS_REPO_SLUG#*/
     script:
       # Install build environment
       - source ./buildx_ci_images.sh
       - set -ex; setup_ci_environment::main; set +x
-      - while sleep 540; do echo "still alive"; done &
+      - while sleep 300; do echo "still alive"; done &
       - set -ex; build_ci_images::main; set +x
