@@ -35,19 +35,11 @@ function setup_ci_environment::install_docker_buildx() {
   fi
 
   ## Install up-to-date version of docker, with buildx support.
-<<<<<<< HEAD
   sudo apt-get remove docker docker-engine docker.io docker-ce
   local -r docker_apt_repo='https://download.docker.com/linux/ubuntu'
   curl -fsSL "${docker_apt_repo}/gpg" | sudo apt-key add -
   local -r os="$(lsb_release -cs)"
   sudo add-apt-repository "deb [arch=arm64] $docker_apt_repo $os stable"
-=======
-  local -r docker_apt_repo='https://download.docker.com/linux/ubuntu'
-  curl -fsSL "${docker_apt_repo}/gpg" | sudo apt-key add -
-  #local -r os="$(lsb_release -cs)"
-  local -r os='bionic'
-  sudo add-apt-repository "deb [arch=amd64] $docker_apt_repo $os stable"
->>>>>>> 570f826f3cb11bdf7e5b3911f533f5b3496463e7
   sudo apt-get update
   sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
 
@@ -61,23 +53,14 @@ function setup_ci_environment::install_docker_buildx() {
   sudo systemctl restart docker
 
   # Install QEMU multi-architecture support for docker buildx.
-<<<<<<< HEAD
   
   # docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-=======
-  docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
->>>>>>> 570f826f3cb11bdf7e5b3911f533f5b3496463e7
 
   # Enable docker CLI experimental support (for 'docker buildx').
   export DOCKER_CLI_EXPERIMENTAL=enabled
   # Instantiate docker buildx builder with multi-architecture support.
-<<<<<<< HEAD
   docker buildx create --name builder --driver docker-container --use
   # docker buildx use mybuilder
-=======
-  docker buildx create --name mybuilder
-  docker buildx use mybuilder
->>>>>>> 570f826f3cb11bdf7e5b3911f533f5b3496463e7
   # Start up buildx and verify that all is OK.
   docker buildx inspect --bootstrap
 }
@@ -128,38 +111,18 @@ function build_ci_images::test_all() {
       image="${DOCKER_BASE}:${tag}"
       msg="Testing docker image $image on platform $platform"
       line="${msg//?/=}"
-<<<<<<< HEAD
       printf '\n%s\n%s\n%s\n' "${line}" "${msg}" "${line}"
-=======
-      printf '\n%s\n%s\n%s\n' "\n${line}" "${msg}" "${line}"
->>>>>>> 570f826f3cb11bdf7e5b3911f533f5b3496463e7
       docker pull -q --platform "$platform" "$image"
 
       echo -n "Image architecture: "
       docker run --rm --entrypoint /bin/sh "$image" -c 'uname -m'
 
-<<<<<<< HEAD
       # Run your test on the built image.
       docker run --rm -v "$PWD:/mnt" -w /mnt "$image" echo "Running on $(uname -m)"
     done
   done
 }
 
-=======
-<<<<<<<< HEAD:buildx_ci_images.sh
-      # Run test on the built image.
-      #docker run --rm  --entrypoint [] "$image" command yarn version
-========
-      # Run your test on the built image.
-      #docker run --rm -v "$PWD:/mnt" -w /mnt "$image" echo "Running on $(uname -m)"
->>>>>>>> 570f826f3cb11bdf7e5b3911f533f5b3496463e7:multi-arch-docker-ci.sh
-    done
-      
-  done
-}
-
-<<<<<<<< HEAD:buildx_ci_images.sh
->>>>>>> 570f826f3cb11bdf7e5b3911f533f5b3496463e7
 # Setup ci environment
 function setup_ci_environment::main() {
   cp Dockerfile Dockerfile.multi-arch
@@ -169,28 +132,8 @@ function setup_ci_environment::main() {
 
 # Build images
 function build_ci_images::main() {
-<<<<<<< HEAD
   # build image
   export DOCKER_BASE=${TRAVIS_REPO_SLUG}
   build_ci_images::build_and_push_all
   # build_ci_images::test_all
-=======
-  # Set platforms to build.
-  export DOCKER_BASE=${TRAVIS_REPO_SLUG}
-  build_ci_images::build_and_push_all
-  #build_ci_images::test_all
-========
-function multi_arch_docker::main() {
-  # Set docker platforms for which to build.
-  #export DOCKER_PLATFORMS='linux/arm64'
-  #DOCKER_PLATFORMS+=' linux/arm/v7'
-  #DOCKER_PLATFORMS+=' linux/amd64'
-
-  cp Dockerfile Dockerfile.multi-arch
-  #multi_arch_docker::install_docker_buildx
-  #multi_arch_docker::login_to_docker_hub
-  multi_arch_docker::build_and_push_all
-  multi_arch_docker::test_all
->>>>>>>> 570f826f3cb11bdf7e5b3911f533f5b3496463e7:multi-arch-docker-ci.sh
->>>>>>> 570f826f3cb11bdf7e5b3911f533f5b3496463e7
 }
