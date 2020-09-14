@@ -1,0 +1,21 @@
+FROM alpine:edge as builder
+
+ENV GITHUB_ORGANIZATION librespot-org
+ENV LIBRESPOT_VERSION v0.1.1
+
+WORKDIR /data
+
+RUN apk -U add curl cargo portaudio-dev protobuf-dev git
+RUN git clone -b ${LIBRESPOT_VERSION} --depth 1 https://github.com/${GITHUB_ORGANIZATION}/librespot.git /src
+WORKDIR /src
+RUN cargo build --release --no-default-features
+ 
+FROM alpine
+RUN apk -U add llvm-libunwind
+
+# Copy image built from source
+COPY --from=builder \
+        /src/target/release/librespot \
+        /usr/local/bin/librespot
+
+USER root
