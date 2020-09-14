@@ -54,7 +54,7 @@ function setup_ci_environment::install_docker_buildx() {
 
   # Install QEMU multi-architecture support for docker buildx.
   
-  # docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
   # Enable docker CLI experimental support (for 'docker buildx').
   export DOCKER_CLI_EXPERIMENTAL=enabled
